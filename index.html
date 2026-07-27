@@ -40,10 +40,11 @@
       font-size: 1rem; width: 100%; margin: 0.3rem 0;
     }
     .hidden { display: none !important; }
-    #scanner-container {
-      width: 100%; max-width: 320px; margin: 0 auto; border-radius: 16px; overflow: hidden;
+    #interactive.viewport {
+      width: 100%; max-width: 340px; margin: 0 auto; border-radius: 16px; overflow: hidden;
       border: 3px solid #4caf50; background: #000; position: relative;
     }
+    #interactive.viewport video, #interactive.viewport canvas { width: 100%; border-radius: 13px; }
     .log-entry { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #eee; }
     .badge { background: #e8f5e9; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: 500; }
     .tab-bar {
@@ -68,7 +69,9 @@
       padding: 0.5rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
     }
     .search-result-item img { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: #f0f0f0; }
-    .scanner-hint { text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #888; }
+    .scanner-hint { text-align: center; margin-top: 0.3rem; font-size: 0.8rem; color: #888; }
+    .zoom-control { width: 100%; max-width: 340px; margin: 0.5rem auto; display: flex; align-items: center; gap: 0.5rem; }
+    .zoom-control input { flex: 1; margin: 0; }
   </style>
 </head>
 <body>
@@ -86,15 +89,19 @@
 
   <div id="scan-view" class="hidden">
     <h2 class="section-title">📷 Barcode scannen</h2>
-    <div id="scanner-container"></div>
-    <p class="scanner-hint">Barcode nahe ranhalten (10–15 cm) und ruhig halten</p>
+    <div id="interactive" class="viewport"></div>
+    <div class="zoom-control hidden" id="zoom-control">
+      <span style="font-size:0.8rem;">🔍</span>
+      <input type="range" id="zoom-slider" min="1" max="3" step="0.1" value="1">
+      <span style="font-size:0.8rem;">🔍</span>
+    </div>
+    <p class="scanner-hint">Barcode in die grüne Box halten – oder Nummer unten eingeben</p>
     <div class="barcode-manual">
       <input type="text" id="manual-barcode" placeholder="Barcode-Nummer" inputmode="numeric">
       <button id="manual-barcode-btn">🔍</button>
     </div>
     <div id="scan-feedback" class="small" style="text-align:center; margin:0.5rem;"></div>
 
-    <!-- Gefundenes Produkt -->
     <div id="scan-result" class="hidden card">
       <h3 id="scan-product-name"></h3>
       <p class="small">pro 100g: <span id="scan-kcal-per100"></span> kcal, <span id="scan-protein-per100"></span> g Protein</p>
@@ -104,7 +111,6 @@
       <button class="secondary" id="cancel-scan-btn" style="margin-top:0.5rem;">↩ Nochmal scannen</button>
     </div>
 
-    <!-- Fallback: nicht gefunden -->
     <div id="unknown-product-form" class="hidden card">
       <h3>Produkt nicht gefunden</h3>
       <p class="small">Lege es selbst an – es wird für diesen Barcode gespeichert.</p>
@@ -115,7 +121,7 @@
       <button id="save-unknown-btn" style="margin-top:0.5rem;">Speichern & weiter</button>
 
       <div style="margin-top:1rem; border-top:1px solid #eee; padding-top:1rem;">
-        <p class="small"><strong>Oder suche nach Namen:</strong></p>
+        <p class="small"><strong>Oder suche nach Namen (deutsche Produkte):</strong></p>
         <div class="flex-row">
           <input type="text" id="search-name" placeholder="z.B. Marmelade" style="flex:1;">
           <button id="search-name-btn">Suchen</button>
@@ -160,10 +166,10 @@
     <button class="tab-btn" data-view="settings"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>Einst.</button>
   </div>
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@latest/dist/quagga.min.js"></script>
   <script>
     (function() {
-      const DB_NAME = 'tracker_v4';
+      const DB_NAME = 'tracker_v5';
       let db;
       const request = indexedDB.open(DB_NAME, 1);
       request.onupgradeneeded = (e) => {
@@ -179,7 +185,8 @@
       let scannedBarcode = null;
       let scannedProductData = null;
       let selectedCustomFoodId = null;
-      let scanner = null;
+      let quaggaRunning = false;
+      let currentVideoTrack = null;
 
       function showView(viewId) {
         ['home-view','scan-view','manual-view','settings-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
@@ -194,34 +201,90 @@
       }
       document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
 
-      // Scanner mit Zoom-Hinweis
+      // Quagga2 Scanner
       function startScanner() {
-        if (scanner) return;
-        document.getElementById('scan-feedback').textContent = '';
-        const container = document.getElementById('scanner-container');
-        container.innerHTML = '';
-        scanner = new Html5Qrcode('scanner-container');
-        scanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 180 }, aspectRatio: 1.5, disableFlip: false },
-          (decodedText) => {
-            stopScanner();
-            document.getElementById('scan-feedback').textContent = 'Produkt wird geladen...';
-            handleBarcode(decodedText);
+        if (quaggaRunning) return;
+        document.getElementById('scan-feedback').textContent = 'Kamera wird gestartet...';
+        document.getElementById('scan-result').classList.add('hidden');
+        document.getElementById('unknown-product-form').classList.add('hidden');
+        document.getElementById('zoom-control').classList.add('hidden');
+
+        Quagga.init({
+          inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector("#interactive"),
+            constraints: {
+              facingMode: "environment",
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              aspectRatio: { ideal: 1.333 }
+            },
           },
-          () => {}
-        ).catch(err => {
-          document.getElementById('scan-feedback').textContent = 'Kamera nicht verfügbar.';
-          stopScanner();
+          decoder: {
+            readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"]
+          },
+          locate: true,
+          numOfWorkers: 0, // besser für mobile Performance
+          frequency: 10
+        }, function(err) {
+          if (err) {
+            document.getElementById('scan-feedback').textContent = 'Kamera-Fehler: ' + err;
+            return;
+          }
+          quaggaRunning = true;
+          document.getElementById('scan-feedback').textContent = 'Bereit – Barcode in die Mitte halten.';
+          Quagga.start();
+
+          // Zoom-Support
+          setTimeout(() => {
+            try {
+              const video = document.querySelector('#interactive video');
+              if (video && video.srcObject) {
+                const track = video.srcObject.getVideoTracks()[0];
+                if (track && track.getCapabilities().zoom) {
+                  currentVideoTrack = track;
+                  document.getElementById('zoom-control').classList.remove('hidden');
+                  document.getElementById('zoom-slider').value = track.getSettings().zoom || 1;
+                }
+              }
+            } catch(e) { /* kein Zoom */ }
+          }, 800);
+
+          Quagga.onDetected(handleQuaggaDetection);
         });
       }
-      function stopScanner() {
-        if (scanner) {
-          scanner.stop().then(() => { scanner.clear(); scanner = null; }).catch(() => {});
-          document.getElementById('scanner-container').innerHTML = '';
+
+      function handleQuaggaDetection(result) {
+        if (result && result.codeResult && result.codeResult.code) {
+          const code = result.codeResult.code;
+          stopScanner();
+          document.getElementById('scan-feedback').textContent = 'Produkt wird geladen...';
+          handleBarcode(code);
         }
       }
 
+      function stopScanner() {
+        if (quaggaRunning) {
+          Quagga.stop();
+          quaggaRunning = false;
+          currentVideoTrack = null;
+          document.getElementById('zoom-control').classList.add('hidden');
+        }
+        document.getElementById('scan-feedback').textContent = '';
+      }
+
+      // Zoom-Slider
+      document.getElementById('zoom-slider').addEventListener('input', function(e) {
+        if (currentVideoTrack) {
+          const zoomVal = parseFloat(e.target.value);
+          currentVideoTrack.applyConstraints({
+            advanced: [{ zoom: zoomVal }]
+          }).catch(() => {});
+        }
+      });
+
+      // Manuelle Barcode-Eingabe
       document.getElementById('manual-barcode-btn').onclick = () => {
         const code = document.getElementById('manual-barcode').value.trim();
         if (!code) return;
@@ -241,7 +304,6 @@
             serving_size: null, serving_grams: null, pack_weight: local.pack_weight || null
           };
           renderScanResult();
-          document.getElementById('scan-feedback').textContent = '';
           return;
         }
         try {
@@ -267,7 +329,6 @@
           document.getElementById('search-name').value = '';
           document.getElementById('search-results').innerHTML = '';
         }
-        document.getElementById('scan-feedback').textContent = '';
       }
 
       function renderScanResult() {
@@ -305,17 +366,17 @@
         renderScanResult();
       };
 
-      // Textsuche nach Namen
+      // Textsuche mit DE-Filter
       document.getElementById('search-name-btn').onclick = async () => {
         const query = document.getElementById('search-name').value.trim();
         if (!query) return;
         const resDiv = document.getElementById('search-results');
         resDiv.innerHTML = '<p class="small">Suche...</p>';
         try {
-          const resp = await fetch(`https://de.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=1&page_size=5`);
+          const resp = await fetch(`https://de.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&lc=de&json=1&page_size=5`);
           const data = await resp.json();
           if (!data.products || data.products.length === 0) {
-            resDiv.innerHTML = '<p class="small">Keine Ergebnisse.</p>';
+            resDiv.innerHTML = '<p class="small">Keine deutschen Produkte gefunden.</p>';
             return;
           }
           resDiv.innerHTML = data.products.map(p => {
@@ -373,7 +434,7 @@
         });
       }
 
-      // Manuelle Eingabe (wie vorher)
+      // Manuelle Eingabe (unverändert)
       async function loadCustomFoodSelect() {
         const select = document.getElementById('custom-food-select');
         select.innerHTML = '<option value="">-- Eigenes Lebensmittel --</option>';
