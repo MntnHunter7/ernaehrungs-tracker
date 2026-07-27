@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ernährungstracker</title>
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Tracker%22%2C%22short_name%22%3A%22Tracker%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234caf50%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'20'%20fill%3D'%234caf50'%2F%3E%3Ctext%20x%3D'50'%20y%3D'68'%20font-size%3D'50'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'sans-serif'%3E%E2%9A%96%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22100x100%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+      color: #1e1e1e;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 70px 0;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1, h2 { margin: 0.8rem 0; }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.2rem;
+      margin: 0 1rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .progress-bar {
+      height: 14px;
+      background: #e0e0e0;
+      border-radius: 7px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #4caf50;
+      transition: width 0.4s;
+      border-radius: 7px;
+    }
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    button, .btn {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+    button.secondary {
+      background: #e8e8e8;
+      color: #333;
+    }
+    button.danger {
+      background: #ff5252;
+    }
+    button:active { opacity: 0.7; transform: scale(0.97); }
+    input, select {
+      background: #fff;
+      color: #1e1e1e;
+      border: 1px solid #ccc;
+      padding: 0.7rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      width: 100%;
+    }
+    .hidden { display: none !important; }
+    #scanner-container {
+      width: 100%;
+      max-width: 280px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .log-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .badge {
+      background: #e8f5e9;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    /* Tab-Leiste unten */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      background: #ffffff;
+      border-top: 1px solid #ddd;
+      padding: 0.5rem 0 env(safe-area-inset-bottom, 0);
+      justify-content: space-around;
+      z-index: 10;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.3rem 0.5rem;
+      border-radius: 12px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .tab-btn.active { color: #4caf50; font-weight: 600; }
+    .tab-btn svg { width: 24px; height: 24px; margin-bottom: 0.1rem; }
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 1rem 1rem 0.5rem;
+    }
+    .small { font-size: 0.85rem; color: #666; }
+    .macro { font-weight: 600; }
+    .delete-entry {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.2rem;
+      padding: 0 0.3rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hauptbereiche -->
+  <div id="home-view">
+    <h2 class="section-title">📊 Heute</h2>
+    <div class="card">
+      <div class="flex-row"><span>Kalorien</span><span id="kcal-display">0 / 2900 kcal</span></div>
+      <div class="progress-bar"><div id="kcal-bar" class="progress-fill" style="width:0%"></div></div>
+      <div class="flex-row"><span>Protein</span><span id="protein-display">0 / 175 g</span></div>
+      <div class="progress-bar"><div id="protein-bar" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <h3 style="margin:0 1rem 0.5rem;">Mahlzeiten</h3>
+    <div id="log-list" class="card" style="min-height: 100px;">
+      <p class="small">Noch keine Einträge.</p>
+    </div>
+  </div>
+
+  <div id="scan-view" class="hidden">
+    <h2 class="section-title">📷 Barcode scannen</h2>
+    <div id="scanner-container"></div>
+    <div id="scan-feedback" class="small" style="text-align:center; margin:1rem;"></div>
+    <div id="scan-result" class="hidden card">
+      <h3 id="scan-product-name" style="margin-bottom:0.3rem;"></h3>
+      <p class="small">pro 100g: <span id="scan-kcal-per100"></span> kcal, <span id="scan-protein-per100"></span> g Protein</p>
+      <div class="flex-row" style="margin-top:0.5rem;">
+        <label>Gramm: <input type="number" id="scan-amount" value="100" min="1" step="1" style="width:80px;"></label>
+      </div>
+      <div id="serving-buttons" class="flex-row" style="margin-top:0.5rem; gap:0.3rem;"></div>
+      <div id="custom-serving-creator" class="hidden" style="margin-top:0.5rem;">
+        <input type="text" id="custom-serving-desc" placeholder="z.B. Scheibe" style="width:100px; display:inline-block;">
+        <input type="number" id="custom-serving-weight" placeholder="g" style="width:70px; display:inline-block;" step="1">
+        <button id="save-custom-serving-btn" class="secondary" style="padding:0.4rem 0.8rem;">Speichern</button>
+      </div>
+      <button id="add-scanned-btn" style="margin-top:1rem;">✅ Hinzufügen</button>
+      <button class="secondary" id="cancel-scan-btn" style="margin-top:0.5rem;">↩ Nochmal scannen</button>
+    </div>
+  </div>
+
+  <div id="manual-view" class="hidden">
+    <h2 class="section-title">✍️ Manuell</h2>
+    <div class="card">
+      <select id="custom-food-select">
+        <option value="">-- Eigenes Lebensmittel --</option>
+      </select>
+      <p class="small" style="margin-top:1rem;">Oder neu anlegen (wird gespeichert):</p>
+      <input type="text" id="new-food-name" placeholder="Name (z.B. Apfel)">
+      <div class="flex-row">
+        <input type="number" id="new-food-kcal" placeholder="kcal/100g" step="0.1">
+        <input type="number" id="new-food-protein" placeholder="Protein/100g" step="0.1">
+      </div>
+      <input type="text" id="new-food-portion-desc" placeholder="Portion (z.B. 1 Stück=80g)">
+      <div class="flex-row" style="margin-top:0.5rem;">
+        <label>Menge: <input type="number" id="manual-amount" value="100" min="1" step="1" style="width:80px;"></label>
+        <select id="manual-unit">
+          <option value="g">g</option>
+          <option value="portion">Portion</option>
+        </select>
+      </div>
+      <button id="add-manual-btn" style="margin-top:1rem;">Hinzufügen</button>
+    </div>
+  </div>
+
+  <div id="settings-view" class="hidden">
+    <h2 class="section-title">⚙️ Einstellungen</h2>
+    <div class="card">
+      <label>Kalorienziel: <input type="number" id="goal-kcal" value="2900"></label>
+      <label>Proteinziel (g): <input type="number" id="goal-protein" value="175"></label>
+      <button id="save-settings-btn" style="margin-top:1rem;">Speichern</button>
+    </div>
+  </div>
+
+  <!-- Tab-Leiste -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-view="home"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>Heute</button>
+    <button class="tab-btn" data-view="scan"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h6v2H5v4H3V3zm18 0v6h-2V5h-4V3h6zm-6 18v-2h4v-4h2v6h-6zM3 15h2v4h4v2H3v-6z"/></svg>Scannen</button>
+    <button class="tab-btn" data-view="manual"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"/></svg>Manuell</button>
+    <button class="tab-btn" data-view="settings"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>Einst.</button>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    (function() {
+      // ---------- DB ----------
+      const DB_NAME = 'tracker_v2';
+      let db;
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        if (!db.objectStoreNames.contains('logs')) db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains('customFoods')) db.createObjectStore('customFoods', { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+        if (!db.objectStoreNames.contains('servingDefs')) db.createObjectStore('servingDefs', { keyPath: 'barcode' });
+      };
+      request.onsuccess = (e) => { db = e.target.result; initApp(); };
+
+      // ---------- Globale States ----------
+      let currentView = 'home';
+      let scannedBarcode = null;
+      let scannedProductData = null; // { name, kcal_per100, protein_per100, serving_size, serving_grams }
+      let selectedCustomFoodId = null;
+      let scanner = null;
+
+      // ---------- Navigation ----------
+      function showView(viewId) {
+        ['home-view','scan-view','manual-view','settings-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
+        document.getElementById(viewId+'-view').classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-view="${viewId}"]`).classList.add('active');
+        currentView = viewId;
+        if (viewId === 'home') refreshHome();
+        if (viewId === 'manual') loadCustomFoodSelect();
+        if (viewId === 'scan') startScanner();
+        else stopScanner();
+      }
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => showView(btn.dataset.view));
+      });
+
+      // ---------- Scanner ----------
+      function startScanner() {
+        if (scanner) return;
+        document.getElementById('scan-feedback').textContent = 'Kamera wird gestartet...';
+        const container = document.getElementById('scanner-container');
+        container.innerHTML = '';
+        scanner = new Html5Qrcode('scanner-container');
+        scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            stopScanner();
+            document.getElementById('scan-feedback').textContent = 'Produkt wird geladen...';
+            fetchProduct(decodedText);
+          },
+          () => {}
+        ).catch(err => {
+          document.getElementById('scan-feedback').textContent = 'Kamera nicht verfügbar.';
+          stopScanner();
+        });
+      }
+      function stopScanner() {
+        if (scanner) {
+          scanner.stop().then(() => { scanner.clear(); scanner = null; }).catch(() => {});
+          document.getElementById('scanner-container').innerHTML = '';
+        }
+      }
+
+      async function fetchProduct(barcode) {
+        scannedBarcode = barcode;
+        document.getElementById('scan-result').classList.add('hidden');
+        try {
+          const resp = await fetch(`https://de.openfoodfacts.org/api/v2/product/${barcode}.json`);
+          const data = await resp.json();
+          if (data.status !== 1 || !data.product) throw new Error('Nicht gefunden');
+          const p = data.product;
+          const kcal = parseFloat(p.nutriments?.['energy-kcal_100g'] || 0);
+          const protein = parseFloat(p.nutriments?.proteins_100g || 0);
+          let servingSize = p.serving_size || '';
+          let servingGrams = null;
+          if (servingSize) {
+            const match = servingSize.match(/(\d+)\s*g/i);
+            if (match) servingGrams = parseFloat(match[1]);
+          }
+          scannedProductData = {
+            name: p.product_name_de || p.product_name || 'Unbekannt',
+            kcal_per100: kcal,
+            protein_per100: protein,
+            serving_size: servingSize,
+            serving_grams: servingGrams
+          };
+          renderScanResult();
+        } catch (e) {
+          alert('Produkt nicht gefunden: ' + e.message);
+          document.getElementById('scan-feedback').textContent = '';
+        }
+        document.getElementById('scan-feedback').textContent = '';
+      }
+
+      async function renderScanResult() {
+        const d = scannedProductData;
+        document.getElementById('scan-product-name').textContent = d.name;
+        document.getElementById('scan-kcal-per100').textContent = d.kcal_per100.toFixed(1);
+        document.getElementById('scan-protein-per100').textContent = d.protein_per100.toFixed(1);
+        document.getElementById('scan-amount').value = d.serving_grams || 100;
+
+        const servingDiv = document.getElementById('serving-buttons');
+        servingDiv.innerHTML = '';
+        document.getElementById('custom-serving-creator').classList.add('hidden');
+
+        // Check local serving defs
+        const localDef = await getServingDef(scannedBarcode);
+        let effectiveServingGrams = d.serving_grams;
+        let effectiveServingDesc = '';
+
+        if (localDef) {
+          effectiveServingGrams = localDef.weight;
+          effectiveServingDesc = localDef.desc;
+        } else if (d.serving_size && d.serving_grams) {
+          effectiveServingGrams = d.serving_grams;
+          effectiveServingDesc = d.serving_size.replace(/\(?\d+\s*g\)?/i, '').trim();
+          if (!effectiveServingDesc) effectiveServingDesc = 'Portion';
+        }
+
+        if (effectiveServingGrams) {
+          servingDiv.innerHTML = `
+            <span class="small">${effectiveServingDesc} (${effectiveServingGrams}g):</span>
+            <button onclick="applyPortion(1, ${effectiveServingGrams})">1</button>
+            <button onclick="applyPortion(2, ${effectiveServingGrams})">2</button>
+            <button onclick="applyPortion(3, ${effectiveServingGrams})">3</button>
+          `;
+        } else {
+          document.getElementById('custom-serving-creator').classList.remove('hidden');
+        }
+        document.getElementById('scan-result').classList.remove('hidden');
+      }
+
+      window.applyPortion = (count, weight) => {
+        document.getElementById('scan-amount').value = count * weight;
+      };
+
+      document.getElementById('save-custom-serving-btn').onclick = async () => {
+        const desc = document.getElementById('custom-serving-desc').value.trim();
+        const weight = parseFloat(document.getElementById('custom-serving-weight').value);
+        if (!desc || isNaN(weight) || weight <= 0) return alert('Bitte Beschreibung und Gewicht eingeben.');
+        await setServingDef(scannedBarcode, { desc, weight });
+        scannedProductData.serving_grams = weight;
+        scannedProductData.serving_size = desc;
+        renderScanResult();
+      };
+
+      document.getElementById('add-scanned-btn').onclick = async () => {
+        if (!scannedProductData) return;
+        const amount = parseFloat(document.getElementById('scan-amount').value);
+        if (isNaN(amount) || amount <= 0) return;
+        const kcal = (scannedProductData.kcal_per100 * amount) / 100;
+        const protein = (scannedProductData.protein_per100 * amount) / 100;
+        await addLogEntry(scannedProductData.name, amount, kcal, protein);
+        scannedProductData = null;
+        scannedBarcode = null;
+        document.getElementById('scan-result').classList.add('hidden');
+        showView('home');
+      };
+
+      document.getElementById('cancel-scan-btn').onclick = () => {
+        scannedProductData = null;
+        scannedBarcode = null;
+        document.getElementById('scan-result').classList.add('hidden');
+        startScanner();
+      };
+
+      // ---------- Serving Defs Store ----------
+      function getServingDef(barcode) {
+        return new Promise(resolve => {
+          const tx = db.transaction('servingDefs','readonly');
+          const store = tx.objectStore('servingDefs');
+          const req = store.get(barcode);
+          req.onsuccess = () => resolve(req.result || null);
+        });
+      }
+      function setServingDef(barcode, def) {
+        return new Promise(resolve => {
+          const tx = db.transaction('servingDefs','readwrite');
+          const store = tx.objectStore('servingDefs');
+          store.put({ barcode, ...def });
+          tx.oncomplete = resolve;
+        });
+      }
+
+      // ---------- Manuelle Eingabe ----------
+      async function loadCustomFoodSelect() {
+        const select = document.getElementById('custom-food-select');
+        select.innerHTML = '<option value="">-- Eigenes Lebensmittel --</option>';
+        const foods = await getAllCustomFoods();
+        foods.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = `${f.name} (${f.kcal_per100} kcal, ${f.protein_per100}g/100g)`;
+          select.appendChild(opt);
+        });
+        selectedCustomFoodId = null;
+        document.getElementById('new-food-name').value = '';
+        document.getElementById('new-food-kcal').value = '';
+        document.getElementById('new-food-protein').value = '';
+        document.getElementById('new-food-portion-desc').value = '';
+        document.getElementById('manual-amount').value = 100;
+        document.getElementById('manual-unit').value = 'g';
+      }
+      document.getElementById('custom-food-select').onchange = function() {
+        selectedCustomFoodId = this.value ? Number(this.value) : null;
+      };
+      document.getElementById('add-manual-btn').onclick = async () => {
+        let name, kcal_per100, protein_per100, portionDesc = null;
+        const unit = document.getElementById('manual-unit').value;
+        const amount = parseFloat(document.getElementById('manual-amount').value);
+
+        if (selectedCustomFoodId) {
+          const foods = await getAllCustomFoods();
+          const food = foods.find(f => f.id === selectedCustomFoodId);
+          if (!food) return;
+          name = food.name;
+          kcal_per100 = food.kcal_per100;
+          protein_per100 = food.protein_per100;
+          portionDesc = food.portion_desc || null;
+        } else {
+          name = document.getElementById('new-food-name').value.trim();
+          kcal_per100 = parseFloat(document.getElementById('new-food-kcal').value);
+          protein_per100 = parseFloat(document.getElementById('new-food-protein').value);
+          portionDesc = document.getElementById('new-food-portion-desc').value.trim() || null;
+          if (!name || isNaN(kcal_per100) || isNaN(protein_per100)) return alert('Bitte ausfüllen.');
+          await addCustomFood({ name, kcal_per100, protein_per100, portion_desc: portionDesc });
+        }
+
+        let amountInGrams = amount;
+        if (unit === 'portion' && portionDesc) {
+          const match = portionDesc.match(/(\d+)\s*g/i);
+          if (match) amountInGrams = parseFloat(match[1]) * amount;
+          else return alert('Portionsbeschreibung benötigt eine Gramm-Angabe (z.B. 1 Becher=150g).');
+        }
+        const kcal = (kcal_per100 * amountInGrams) / 100;
+        const protein = (protein_per100 * amountInGrams) / 100;
+        await addLogEntry(name, amountInGrams, kcal, protein, unit === 'portion' ? `${amount} Portion(en)` : null);
+        showView('home');
+      };
+
+      async function addCustomFood(food) {
+        return new Promise((resolve) => {
+          const tx = db.transaction('customFoods','readwrite');
+          const store = tx.objectStore('customFoods');
+          store.add(food).onsuccess = resolve;
+        });
+      }
+      async function getAllCustomFoods() {
+        return new Promise(resolve => {
+          const tx = db.transaction('customFoods','readonly');
+          tx.objectStore('customFoods').getAll().onsuccess = e => resolve(e.target.result);
+        });
+      }
+
+      // ---------- Log ----------
+      async function addLogEntry(name, amount, kcal, protein, unitText = null) {
+        const entry = {
+          timestamp: new Date().toISOString(),
+          date: new Date().toISOString().slice(0,10),
+          name, amount, kcal: Math.round(kcal), protein: parseFloat(protein.toFixed(1)),
+          unit: unitText || `${amount}g`
+        };
+        return new Promise(resolve => {
+          const tx = db.transaction('logs','readwrite');
+          tx.objectStore('logs').add(entry).onsuccess = resolve;
+        });
+      }
+      async function getTodayLogs() {
+        const today = new Date().toISOString().slice(0,10);
+        return new Promise(resolve => {
+          const tx = db.transaction('logs','readonly');
+          tx.objectStore('logs').getAll().onsuccess = e => {
+            resolve(e.target.result.filter(l => l.date === today));
+          };
+        });
+      }
+      async function deleteLogEntry(id) {
+        return new Promise(resolve => {
+          const tx = db.transaction('logs','readwrite');
+          tx.objectStore('logs').delete(id).onsuccess = resolve;
+        });
+      }
+
+      window.deleteEntry = async (id) => {
+        if (confirm('Eintrag löschen?')) {
+          await deleteLogEntry(id);
+          refreshHome();
+        }
+      };
+
+      async function refreshHome() {
+        const logs = await getTodayLogs();
+        const [goalKcal, goalProtein] = await Promise.all([
+          getSetting('goalKcal',2900), getSetting('goalProtein',175)
+        ]);
+        const totalKcal = logs.reduce((s,e) => s + e.kcal, 0);
+        const totalProtein = logs.reduce((s,e) => s + e.protein, 0);
+        document.getElementById('kcal-display').textContent = `${totalKcal} / ${goalKcal} kcal`;
+        document.getElementById('protein-display').textContent = `${totalProtein.toFixed(1)} / ${goalProtein} g`;
+        document.getElementById('kcal-bar').style.width = Math.min(100, (totalKcal/goalKcal)*100)+'%';
+        document.getElementById('protein-bar').style.width = Math.min(100, (totalProtein/goalProtein)*100)+'%';
+        const list = document.getElementById('log-list');
+        if (!logs.length) list.innerHTML = '<p class="small">Noch keine Einträge.</p>';
+        else list.innerHTML = logs.sort((a,b)=> b.timestamp.localeCompare(a.timestamp)).map(e => `
+          <div class="log-entry">
+            <span><strong>${e.name}</strong><br><span class="small">${e.unit} | ${new Date(e.timestamp).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</span></span>
+            <span><span class="macro">${e.kcal} kcal</span> | ${e.protein}g</span>
+            <button class="delete-entry" onclick="deleteEntry(${e.id})">✕</button>
+          </div>
+        `).join('');
+      }
+
+      // ---------- Settings ----------
+      function getSetting(key, def) {
+        return new Promise(resolve => {
+          const tx = db.transaction('settings','readonly');
+          tx.objectStore('settings').get(key).onsuccess = e => resolve(e.target.result?.value ?? def);
+        });
+      }
+      function setSetting(key, value) {
+        return new Promise(resolve => {
+          const tx = db.transaction('settings','readwrite');
+          tx.objectStore('settings').put({key, value});
+          tx.oncomplete = resolve;
+        });
+      }
+      document.getElementById('save-settings-btn').onclick = async () => {
+        await setSetting('goalKcal', parseInt(document.getElementById('goal-kcal').value)||2900);
+        await setSetting('goalProtein', parseInt(document.getElementById('goal-protein').value)||175);
+        alert('Gespeichert.');
+        showView('home');
+      };
+      async function initSettingsForm() {
+        document.getElementById('goal-kcal').value = await getSetting('goalKcal',2900);
+        document.getElementById('goal-protein').value = await getSetting('goalProtein',175);
+      }
+
+      // ---------- Start ----------
+      async function initApp() {
+        await initSettingsForm();
+        showView('home');
+      }
+    })();
+  </script>
+</body>
+</html>
