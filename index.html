@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Tracker</title>
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Tracker%22%2C%22short_name%22%3A%22Tracker%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234caf50%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'20'%20fill%3D'%234caf50'%2F%3E%3Ctext%20x%3D'50'%20y%3D'68'%20font-size%3D'50'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'sans-serif'%3E%E2%9A%96%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22100x100%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Tracker%22%2C%22short_name%22%3A%22Tracker%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%234caf50%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'20'%20fill%3D'%234caf50'%2F%3E%3Ctext%20x%3D'50'%20y%3D'68'%20font-size%3D'50'%20text-anchor%3D'middle'%20fill%3D'white'%20font-family%3D'sans-serif'%3E%E2%9A%96%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22100x100%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -57,24 +57,14 @@
     .small { font-size: 0.85rem; color: #666; }
     .macro { font-weight: 600; }
     .delete-entry { background: none; border: none; color: #aaa; font-size: 1.2rem; padding: 0 0.3rem; cursor: pointer; }
-
-    /* Scan-View spezifisch */
-    .scan-actions { display: flex; gap: 0.5rem; margin: 0.5rem 0; flex-wrap: wrap; }
-    .scan-actions button { flex: 1; min-width: 120px; }
-    .image-preview { max-width: 100%; max-height: 200px; border-radius: 12px; margin: 0.5rem 0; border: 2px solid #4caf50; }
-    .ocr-result { background: #f9f9f9; padding: 0.8rem; border-radius: 10px; font-size: 0.9rem; white-space: pre-wrap; max-height: 150px; overflow-y: auto; margin: 0.5rem 0; }
-    .saved-product-item {
-      display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #eee;
+    .food-item {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-radius: 12px; background: #f9f9f9; margin-bottom: 0.5rem;
     }
-    .saved-product-item .info { flex: 1; cursor: pointer; }
-    .saved-product-item .delete-product { background: none; border: none; color: #ff5252; font-size: 1.2rem; padding: 0 0.3rem; }
-    .quick-add { margin-top: 0.3rem; display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; }
-    .quick-add input { width: 70px; margin: 0; }
-    .quick-add button { padding: 0.3rem 0.6rem; font-size: 0.9rem; }
+    .food-item button { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    #photo-preview { max-width: 200px; margin: 1rem auto; border-radius: 12px; display: block; }
   </style>
 </head>
 <body>
-  <!-- HOME -->
   <div id="home-view">
     <h2 class="section-title">📊 Heute</h2>
     <div class="card">
@@ -87,81 +77,78 @@
     <div id="log-list" class="card" style="min-height:100px"><p class="small">Noch keine Einträge.</p></div>
   </div>
 
-  <!-- SCAN (neu) -->
-  <div id="scan-view" class="hidden">
-    <h2 class="section-title">📷 Foto → Nährwerte</h2>
+  <!-- Foto-Scan View -->
+  <div id="photo-view" class="hidden">
+    <h2 class="section-title">📸 Datenblatt scannen</h2>
     <div class="card">
-      <p class="small">Foto von der Nährwerttabelle machen oder aus Galerie laden.</p>
-      <div class="scan-actions">
-        <button id="take-photo-btn">📸 Kamera</button>
-        <button id="upload-photo-btn" class="secondary">🖼️ Galerie</button>
-        <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none;" />
-      </div>
-      <div id="image-container" class="hidden">
-        <img id="preview-image" class="image-preview" alt="Vorschau" />
-        <button id="ocr-btn" class="btn" style="width:100%;">🔍 Nährwerte erkennen</button>
-      </div>
-      <div id="ocr-result-container" class="hidden">
-        <div class="ocr-result" id="ocr-text"></div>
-        <div style="margin-top:0.5rem;">
-          <label>Name: <input type="text" id="product-name" placeholder="z.B. Haferflocken" /></label>
-          <div class="flex-row">
-            <label>kcal / 100g: <input type="number" id="product-kcal" step="0.1" style="width:80px;" /></label>
-            <label>Protein / 100g: <input type="number" id="product-protein" step="0.1" style="width:80px;" /></label>
-          </div>
-          <label>Portion (optional, z.B. 1 Becher=150g): <input type="text" id="product-portion" placeholder="z.B. 1 Portion=80g" /></label>
-          <button id="save-product-btn" style="margin-top:0.5rem;">💾 Produkt speichern</button>
-          <button id="add-from-ocr-btn" class="secondary" style="margin-top:0.3rem;">➕ Jetzt ins Log (ohne speichern)</button>
-        </div>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden">
+      <button id="take-photo-btn">📷 Foto vom Datenblatt machen</button>
+      <div id="ocr-status" class="small" style="margin-top:0.5rem;"></div>
+      <img id="photo-preview" class="hidden" src="" alt="Vorschau">
+
+      <div id="ocr-result" class="hidden">
+        <p><strong>Erkannte Werte (pro 100 g):</strong></p>
+        <label>Name: <input type="text" id="ocr-name" placeholder="z.B. Marmelade"></label>
+        <label>Kalorien (kcal): <input type="number" id="ocr-kcal" step="0.1"></label>
+        <label>Protein (g): <input type="number" id="ocr-protein" step="0.1"></label>
+        <label>Packungsgewicht (g, optional): <input type="number" id="ocr-pack-weight" step="1"></label>
+        <button id="save-ocr-btn">💾 Lebensmittel speichern</button>
       </div>
     </div>
 
-    <!-- Gespeicherte Produkte -->
-    <h3 style="margin:0 1rem 0.5rem;">📦 Meine Produkte</h3>
-    <div id="saved-products-list" class="card">
-      <p class="small">Keine gespeicherten Produkte.</p>
+    <div id="saved-foods-section" style="margin-top:1rem;">
+      <h3 style="margin-left:1rem;">Deine fotografierten Lebensmittel</h3>
+      <div id="saved-foods-list" class="card" style="min-height:60px;">
+        <p class="small">Noch keine gespeichert.</p>
+      </div>
+    </div>
+
+    <!-- Dialog zum Hinzufügen eines gespeicherten Lebensmittels -->
+    <div id="add-food-dialog" class="hidden card" style="margin-top:1rem;">
+      <h3 id="add-food-name"></h3>
+      <p class="small">pro 100g: <span id="add-food-kcal"></span> kcal, <span id="add-food-protein"></span> g Protein</p>
+      <label>Menge (g): <input type="number" id="add-food-amount" value="100" min="1" step="1"></label>
+      <button id="add-food-confirm-btn">✅ Hinzufügen</button>
+      <button class="secondary" id="add-food-cancel-btn">Abbrechen</button>
     </div>
   </div>
 
-  <!-- MANUELL (unverändert) -->
+  <!-- Manuelle Eingabe (fast unverändert) -->
   <div id="manual-view" class="hidden">
     <h2 class="section-title">✍️ Manuell</h2>
     <div class="card">
       <select id="custom-food-select"><option value="">-- Eigenes Lebensmittel --</option></select>
       <p class="small" style="margin-top:1rem;">Oder neu anlegen:</p>
-      <input type="text" id="new-food-name" placeholder="Name (z.B. Apfel)" />
+      <input type="text" id="new-food-name" placeholder="Name (z.B. Apfel)">
       <div class="flex-row">
-        <input type="number" id="new-food-kcal" placeholder="kcal/100g" step="0.1" />
-        <input type="number" id="new-food-protein" placeholder="Protein/100g" step="0.1" />
+        <input type="number" id="new-food-kcal" placeholder="kcal/100g" step="0.1">
+        <input type="number" id="new-food-protein" placeholder="Protein/100g" step="0.1">
       </div>
-      <input type="text" id="new-food-portion-desc" placeholder="Portion (z.B. 1 Stück=80g)" />
+      <input type="text" id="new-food-portion-desc" placeholder="Portion (z.B. 1 Stück=80g)">
       <div class="flex-row" style="margin-top:0.5rem;">
-        <label>Menge: <input type="number" id="manual-amount" value="100" min="1" step="1" style="width:80px;" /></label>
+        <label>Menge: <input type="number" id="manual-amount" value="100" min="1" step="1" style="width:80px;"></label>
         <select id="manual-unit"><option value="g">g</option><option value="portion">Portion</option></select>
       </div>
       <button id="add-manual-btn" style="margin-top:1rem;">Hinzufügen</button>
     </div>
   </div>
 
-  <!-- SETTINGS (unverändert) -->
   <div id="settings-view" class="hidden">
     <h2 class="section-title">⚙️ Einstellungen</h2>
     <div class="card">
-      <label>Kalorienziel: <input type="number" id="goal-kcal" value="2900" /></label>
-      <label>Proteinziel (g): <input type="number" id="goal-protein" value="175" /></label>
+      <label>Kalorienziel: <input type="number" id="goal-kcal" value="2900"></label>
+      <label>Proteinziel (g): <input type="number" id="goal-protein" value="175"></label>
       <button id="save-settings-btn" style="margin-top:1rem;">Speichern</button>
     </div>
   </div>
 
-  <!-- Tab-Leiste -->
   <div class="tab-bar">
     <button class="tab-btn active" data-view="home"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>Heute</button>
-    <button class="tab-btn" data-view="scan"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"/></svg>Scannen</button>
+    <button class="tab-btn" data-view="photo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2v12h16V6H4zm8 2a3 3 0 110 6 3 3 0 010-6zm0 2a1 1 0 100 2 1 1 0 000-2z"/></svg>Foto</button>
     <button class="tab-btn" data-view="manual"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"/></svg>Manuell</button>
     <button class="tab-btn" data-view="settings"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>Einst.</button>
   </div>
 
-  <!-- Tesseract.js für OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script>
     (function() {
@@ -173,197 +160,214 @@
         if (!db.objectStoreNames.contains('logs')) db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
         if (!db.objectStoreNames.contains('customFoods')) db.createObjectStore('customFoods', { keyPath: 'id', autoIncrement: true });
         if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+        if (!db.objectStoreNames.contains('photoFoods')) db.createObjectStore('photoFoods', { keyPath: 'id', autoIncrement: true });
       };
       request.onsuccess = (e) => { db = e.target.result; initApp(); };
 
       let currentView = 'home';
-      let selectedCustomFoodId = null;
-      let currentImageFile = null;
+      let selectedPhotoFoodId = null;
+      let ocrResultData = null; // temporär zwischengespeicherte OCR-Werte
 
-      // ---- Hilfe-Funktionen ----
       function showView(viewId) {
-        ['home-view','scan-view','manual-view','settings-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
+        ['home-view','photo-view','manual-view','settings-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
         document.getElementById(viewId+'-view').classList.remove('hidden');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelector(`[data-view="${viewId}"]`).classList.add('active');
         currentView = viewId;
         if (viewId === 'home') refreshHome();
         if (viewId === 'manual') loadCustomFoodSelect();
-        if (viewId === 'scan') refreshSavedProducts();
+        if (viewId === 'photo') loadPhotoFoodsList();
       }
       document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
 
-      // ---- Scan: Foto & OCR ----
+      // ---------- FOTO-OCR ----------
+      const photoInput = document.getElementById('photo-input');
       const takePhotoBtn = document.getElementById('take-photo-btn');
-      const uploadBtn = document.getElementById('upload-photo-btn');
-      const fileInput = document.getElementById('file-input');
-      const previewImg = document.getElementById('preview-image');
-      const imageContainer = document.getElementById('image-container');
-      const ocrResultContainer = document.getElementById('ocr-result-container');
-      const ocrText = document.getElementById('ocr-text');
+      const photoPreview = document.getElementById('photo-preview');
+      const ocrStatus = document.getElementById('ocr-status');
+      const ocrResultDiv = document.getElementById('ocr-result');
+      const ocrName = document.getElementById('ocr-name');
+      const ocrKcal = document.getElementById('ocr-kcal');
+      const ocrProtein = document.getElementById('ocr-protein');
+      const ocrPackWeight = document.getElementById('ocr-pack-weight');
 
-      // Kamera oder Galerie öffnen
       takePhotoBtn.addEventListener('click', () => {
-        fileInput.setAttribute('capture', 'environment');
-        fileInput.click();
-      });
-      uploadBtn.addEventListener('click', () => {
-        fileInput.removeAttribute('capture');
-        fileInput.click();
+        photoInput.click();
       });
 
-      fileInput.addEventListener('change', (e) => {
+      photoInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        currentImageFile = file;
+        // Vorschau anzeigen
         const reader = new FileReader();
         reader.onload = (ev) => {
-          previewImg.src = ev.target.result;
-          imageContainer.classList.remove('hidden');
-          ocrResultContainer.classList.add('hidden');
-          document.getElementById('product-name').value = '';
-          document.getElementById('product-kcal').value = '';
-          document.getElementById('product-protein').value = '';
-          document.getElementById('product-portion').value = '';
+          photoPreview.src = ev.target.result;
+          photoPreview.classList.remove('hidden');
         };
         reader.readAsDataURL(file);
-        fileInput.value = ''; // reset
-      });
 
-      // OCR starten
-      document.getElementById('ocr-btn').addEventListener('click', async () => {
-        if (!currentImageFile) return;
-        ocrResultContainer.classList.add('hidden');
-        ocrText.textContent = 'OCR läuft...';
-
+        ocrStatus.textContent = 'Texterkennung läuft... (deutsch)';
+        ocrResultDiv.classList.add('hidden');
         try {
-          const result = await Tesseract.recognize(currentImageFile, 'deu', {
-            logger: (m) => { if (m.status === 'recognizing text') ocrText.textContent = 'Erkenne... ' + Math.round(m.progress * 100) + '%'; }
+          const { data: { text } } = await Tesseract.recognize(file, 'deu', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                ocrStatus.textContent = `Erkenne Text... ${Math.round(m.progress * 100)}%`;
+              }
+            }
           });
-          const text = result.data.text;
-          ocrText.textContent = text || '(kein Text erkannt)';
-          ocrResultContainer.classList.remove('hidden');
-
-          // Werte parsen
-          const parsed = parseNutrition(text);
-          if (parsed.kcal !== null) document.getElementById('product-kcal').value = parsed.kcal;
-          if (parsed.protein !== null) document.getElementById('product-protein').value = parsed.protein;
-          if (parsed.portion) document.getElementById('product-portion').value = parsed.portion;
-          // Name: versuche, einen Namen zu finden (z.B. erste Zeile)
-          const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-          if (lines.length > 0 && !document.getElementById('product-name').value) {
-            // nimm erste Zeile, die nicht nur Zahlen oder "Nährwerte" enthält
-            const nameLine = lines.find(l => !/^\d/.test(l) && !/nähr|energie|kcal|protein|fett|kohlenhydrat/i.test(l));
-            if (nameLine) document.getElementById('product-name').value = nameLine;
-          }
+          ocrStatus.textContent = 'Fertig. Bitte Werte prüfen.';
+          const parsed = parseNutritionText(text);
+          ocrName.value = parsed.name || '';
+          ocrKcal.value = parsed.kcal || '';
+          ocrProtein.value = parsed.protein || '';
+          ocrPackWeight.value = parsed.packWeight || '';
+          ocrResultDiv.classList.remove('hidden');
+          ocrResultData = { ...parsed, imageDataUrl: photoPreview.src };
         } catch (err) {
-          ocrText.textContent = 'Fehler beim OCR: ' + err.message;
-          ocrResultContainer.classList.remove('hidden');
+          ocrStatus.textContent = 'Fehler: ' + err.message;
         }
       });
 
-      // Parsing-Helfer
-      function parseNutrition(text) {
-        const result = { kcal: null, protein: null, portion: null };
-        const lower = text.toLowerCase();
-        // kcal suchen: Zahl vor "kcal" oder "kilokalorien"
-        const kcalMatch = text.match(/(\d+[,.]?\d*)\s*(?:kcal|kilokalorien)/i);
-        if (kcalMatch) result.kcal = parseFloat(kcalMatch[1].replace(',', '.'));
-        // Protein: Zahl vor "protein" oder "eiweiß"
-        const proteinMatch = text.match(/(\d+[,.]?\d*)\s*(?:protein|eiweiß|eiweiss)/i);
-        if (proteinMatch) result.protein = parseFloat(proteinMatch[1].replace(',', '.'));
-        // Portion: z.B. "100 g" oder "1 Portion = 150g"
-        const portionMatch = text.match(/(\d+)\s*(?:g|gramm)\s*(?:pro\s*)?(?:portion|packung|stück)/i) ||
-                             text.match(/portion\s*[:=]\s*(\d+)\s*g/i);
-        if (portionMatch) result.portion = portionMatch[1] + 'g';
-        // auch "pro 100g" – dann setzen wir 100g als Portion
-        if (!result.portion && /pro\s*100\s*g/i.test(text)) result.portion = '100g';
-        return result;
+      function parseNutritionText(text) {
+        // Suche nach Kalorien (kcal) und Protein (g) pro 100g oder pro Portion
+        const lines = text.split(/\r?\n/);
+        let kcal = null, protein = null, name = '', packWeight = null;
+        const kcalRegex = /(?:brennwert|energie|kalorien)[:\s]*(\d+[\.,]?\d*)\s*(?:kcal|kj)/i;
+        const proteinRegex = /(?:eiweiß|protein)[:\s]*(\d+[\.,]?\d*)\s*g/i;
+        // Versuche zuerst pro 100g zu identifizieren
+        for (const line of lines) {
+          const kcalMatch = line.match(kcalRegex);
+          if (kcalMatch) {
+            let val = parseFloat(kcalMatch[1].replace(',', '.'));
+            if (line.toLowerCase().includes('kj') && !line.toLowerCase().includes('kcal')) {
+              val = val / 4.184; // kJ in kcal umrechnen
+            }
+            kcal = Math.round(val);
+          }
+          const proteinMatch = line.match(proteinRegex);
+          if (proteinMatch) {
+            protein = parseFloat(proteinMatch[1].replace(',', '.'));
+          }
+          // Einfache Erkennung von "100 g" oder "pro 100g" etc.
+          if (line.includes('100 g') || line.includes('100g')) {
+            // nichts, Bestätigung, dass es pro 100g ist
+          }
+        }
+        // Falls keine Werte pro 100g gefunden, versuche es mit pro Portion (und frage nach Gewicht)
+        if (!kcal) {
+          // Fallback: erste Zahl, die wie kcal aussieht
+          const genericKcal = text.match(/(\d+)\s*kcal/);
+          if (genericKcal) kcal = parseInt(genericKcal[1]);
+        }
+        // Packungsgewicht aus Text extrahieren (z.B. "200 g", "500g")
+        const weightMatch = text.match(/(\d+)\s*g\b/);
+        if (weightMatch) packWeight = parseInt(weightMatch[1]);
+        // Name: die erste Zeile, die kein Nährwert ist
+        for (const line of lines) {
+          if (!line.match(/brennwert|energie|eiweiß|protein|kohlenhydrate|fett|davon|gesättigte|zucker|salz|nährwerte|durchschnitt/i) && line.trim().length > 3) {
+            name = line.trim().substring(0, 30); // auf 30 Zeichen kürzen
+            break;
+          }
+        }
+        return { kcal, protein, name, packWeight };
       }
 
-      // Produkt speichern (in customFoods)
-      document.getElementById('save-product-btn').addEventListener('click', async () => {
-        const name = document.getElementById('product-name').value.trim();
-        const kcal = parseFloat(document.getElementById('product-kcal').value);
-        const protein = parseFloat(document.getElementById('product-protein').value);
-        const portion = document.getElementById('product-portion').value.trim() || null;
-        if (!name || isNaN(kcal) || isNaN(protein)) {
-          alert('Bitte Name, kcal und Protein ausfüllen.');
+      document.getElementById('save-ocr-btn').addEventListener('click', async () => {
+        const name = ocrName.value.trim() || 'Unbekannt';
+        const kcal = parseFloat(ocrKcal.value);
+        const protein = parseFloat(ocrProtein.value);
+        const packWeight = parseFloat(ocrPackWeight.value) || null;
+        if (isNaN(kcal) || isNaN(protein)) {
+          alert('Bitte Kalorien und Protein eingeben.');
           return;
         }
-        await addCustomFood({ name, kcal_per100: kcal, protein_per100: protein, portion_desc: portion });
-        alert('Produkt gespeichert!');
-        refreshSavedProducts();
-        // Felder zurücksetzen? (optional)
+        // In photoFoods speichern
+        const food = { name, kcal_per100: kcal, protein_per100: protein, pack_weight: packWeight };
+        await addPhotoFood(food);
+        ocrResultDiv.classList.add('hidden');
+        photoPreview.classList.add('hidden');
+        photoInput.value = '';
+        ocrStatus.textContent = 'Gespeichert!';
+        loadPhotoFoodsList();
       });
 
-      // Direkt ins Log (ohne speichern)
-      document.getElementById('add-from-ocr-btn').addEventListener('click', async () => {
-        const name = document.getElementById('product-name').value.trim() || 'Unbekannt';
-        const kcalPer100 = parseFloat(document.getElementById('product-kcal').value);
-        const proteinPer100 = parseFloat(document.getElementById('product-protein').value);
-        if (isNaN(kcalPer100) || isNaN(proteinPer100)) {
-          alert('Bitte kcal und Protein eintragen.');
-          return;
-        }
-        const amount = 100; // Standard, aber wir könnten auch ein Eingabefeld für Menge einbauen
-        const kcal = (kcalPer100 * amount) / 100;
-        const protein = (proteinPer100 * amount) / 100;
-        await addLogEntry(name, amount, kcal, protein);
-        showView('home');
-      });
-
-      // ---- Gespeicherte Produkte anzeigen & verwalten ----
-      async function refreshSavedProducts() {
-        const container = document.getElementById('saved-products-list');
-        const foods = await getAllCustomFoods();
-        if (!foods.length) {
-          container.innerHTML = '<p class="small">Keine gespeicherten Produkte.</p>';
-          return;
-        }
-        container.innerHTML = foods.map(f => `
-          <div class="saved-product-item" data-id="${f.id}">
-            <div class="info" onclick="quickSelectProduct(${f.id})">
-              <strong>${f.name}</strong><br>
-              <span class="small">${f.kcal_per100} kcal | ${f.protein_per100}g Protein / 100g${f.portion_desc ? ' · ' + f.portion_desc : ''}</span>
-            </div>
-            <button class="delete-product" onclick="deleteProduct(${f.id})">✕</button>
-          </div>
-        `).join('');
-        // Füge für jedes Produkt ein Quick-Add-Feld hinzu (unterhalb der Liste oder in der Zeile?)
-        // Wir bauen es als zusätzliche Zeile ein – aber besser: wir zeigen beim Klick auf "info" ein Popup oder ein erweitertes Feld.
-        // Hier machen wir es einfach: Klick auf Produktname öffnet eine Eingabe für Menge und fügt hinzu.
-        // Dazu definieren wir eine globale Funktion quickSelectProduct.
-      }
-
-      window.quickSelectProduct = async function(id) {
-        const foods = await getAllCustomFoods();
-        const food = foods.find(f => f.id === id);
-        if (!food) return;
-        const amount = prompt(`Menge in Gramm für "${food.name}" eingeben:`, '100');
-        if (amount === null) return;
-        const g = parseFloat(amount);
-        if (isNaN(g) || g <= 0) { alert('Bitte eine gültige Zahl.'); return; }
-        const kcal = (food.kcal_per100 * g) / 100;
-        const protein = (food.protein_per100 * g) / 100;
-        await addLogEntry(food.name, g, kcal, protein);
-        showView('home');
-      };
-
-      window.deleteProduct = async function(id) {
-        if (!confirm('Produkt wirklich löschen?')) return;
-        await deleteCustomFood(id);
-        refreshSavedProducts();
-      };
-
-      async function deleteCustomFood(id) {
+      // ---------- Foto-Lebensmittel DB ----------
+      function addPhotoFood(food) {
         return new Promise(resolve => {
-          const tx = db.transaction('customFoods','readwrite');
-          tx.objectStore('customFoods').delete(id).onsuccess = resolve;
+          const tx = db.transaction('photoFoods','readwrite');
+          tx.objectStore('photoFoods').add(food).onsuccess = resolve;
+        });
+      }
+      function getAllPhotoFoods() {
+        return new Promise(resolve => {
+          const tx = db.transaction('photoFoods','readonly');
+          tx.objectStore('photoFoods').getAll().onsuccess = e => resolve(e.target.result);
+        });
+      }
+      function deletePhotoFood(id) {
+        return new Promise(resolve => {
+          const tx = db.transaction('photoFoods','readwrite');
+          tx.objectStore('photoFoods').delete(id).onsuccess = resolve;
         });
       }
 
-      // ---- Manuelle Eingabe (unverändert, aber wir nutzen customFoods) ----
+      async function loadPhotoFoodsList() {
+        const list = document.getElementById('saved-foods-list');
+        const foods = await getAllPhotoFoods();
+        if (foods.length === 0) {
+          list.innerHTML = '<p class="small">Noch keine fotografierten Lebensmittel.</p>';
+        } else {
+          list.innerHTML = foods.map(f => `
+            <div class="food-item">
+              <div>
+                <strong>${f.name}</strong><br>
+                <span class="small">${f.kcal_per100} kcal, ${f.protein_per100}g Protein / 100g</span>
+                ${f.pack_weight ? `<br><span class="small">Packung: ${f.pack_weight}g</span>` : ''}
+              </div>
+              <div style="display:flex; gap:0.3rem;">
+                <button class="secondary" onclick="quickAddPhotoFood(${f.id}, '${f.name.replace(/'/g, "\\'")}', ${f.kcal_per100}, ${f.protein_per100})">➕</button>
+                <button class="danger" onclick="deletePhotoFoodHandler(${f.id})">✕</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      window.quickAddPhotoFood = (id, name, kcal, protein) => {
+        selectedPhotoFoodId = id;
+        document.getElementById('add-food-name').textContent = name;
+        document.getElementById('add-food-kcal').textContent = kcal;
+        document.getElementById('add-food-protein').textContent = protein;
+        document.getElementById('add-food-amount').value = 100;
+        document.getElementById('add-food-dialog').classList.remove('hidden');
+      };
+
+      document.getElementById('add-food-cancel-btn').onclick = () => {
+        document.getElementById('add-food-dialog').classList.add('hidden');
+      };
+
+      document.getElementById('add-food-confirm-btn').onclick = async () => {
+        const amount = parseFloat(document.getElementById('add-food-amount').value);
+        if (isNaN(amount) || amount <= 0) return;
+        const foods = await getAllPhotoFoods();
+        const food = foods.find(f => f.id === selectedPhotoFoodId);
+        if (!food) return;
+        const kcal = (food.kcal_per100 * amount) / 100;
+        const protein = (food.protein_per100 * amount) / 100;
+        await addLogEntry(food.name, amount, kcal, protein);
+        document.getElementById('add-food-dialog').classList.add('hidden');
+        showView('home');
+      };
+
+      window.deletePhotoFoodHandler = async (id) => {
+        if (confirm('Lebensmittel löschen?')) {
+          await deletePhotoFood(id);
+          loadPhotoFoodsList();
+        }
+      };
+
+      // ---------- Manuelle Eingabe (wie gehabt) ----------
       async function loadCustomFoodSelect() {
         const select = document.getElementById('custom-food-select');
         select.innerHTML = '<option value="">-- Eigenes Lebensmittel --</option>';
@@ -412,56 +416,20 @@
         await addLogEntry(name, amountInGrams, kcal, protein, unit === 'portion' ? `${amount} Portion(en)` : null);
         showView('home');
       };
+      async function addCustomFood(food) { return new Promise(resolve => { const tx = db.transaction('customFoods','readwrite'); tx.objectStore('customFoods').add(food).onsuccess = resolve; }); }
+      async function getAllCustomFoods() { return new Promise(resolve => { const tx = db.transaction('customFoods','readonly'); tx.objectStore('customFoods').getAll().onsuccess = e => resolve(e.target.result); }); }
 
-      // ---- Datenbank-Operationen ----
-      async function addCustomFood(food) {
-        return new Promise(resolve => {
-          const tx = db.transaction('customFoods','readwrite');
-          tx.objectStore('customFoods').add(food).onsuccess = resolve;
-        });
-      }
-      async function getAllCustomFoods() {
-        return new Promise(resolve => {
-          const tx = db.transaction('customFoods','readonly');
-          tx.objectStore('customFoods').getAll().onsuccess = e => resolve(e.target.result);
-        });
-      }
-
+      // ---------- Log & Home ----------
       async function addLogEntry(name, amount, kcal, protein, unitText = null) {
-        const entry = {
-          timestamp: new Date().toISOString(),
-          date: new Date().toISOString().slice(0,10),
-          name,
-          amount,
-          kcal: Math.round(kcal),
-          protein: parseFloat(protein.toFixed(1)),
-          unit: unitText || `${amount}g`
-        };
-        return new Promise(resolve => {
-          const tx = db.transaction('logs','readwrite');
-          tx.objectStore('logs').add(entry).onsuccess = resolve;
-        });
+        const entry = { timestamp: new Date().toISOString(), date: new Date().toISOString().slice(0,10), name, amount, kcal: Math.round(kcal), protein: parseFloat(protein.toFixed(1)), unit: unitText || `${amount}g` };
+        return new Promise(resolve => { const tx = db.transaction('logs','readwrite'); tx.objectStore('logs').add(entry).onsuccess = resolve; });
       }
       async function getTodayLogs() {
         const today = new Date().toISOString().slice(0,10);
-        return new Promise(resolve => {
-          const tx = db.transaction('logs','readonly');
-          tx.objectStore('logs').getAll().onsuccess = e => resolve(e.target.result.filter(l => l.date === today));
-        });
+        return new Promise(resolve => { const tx = db.transaction('logs','readonly'); tx.objectStore('logs').getAll().onsuccess = e => resolve(e.target.result.filter(l => l.date === today)); });
       }
-      async function deleteLogEntry(id) {
-        return new Promise(resolve => {
-          const tx = db.transaction('logs','readwrite');
-          tx.objectStore('logs').delete(id).onsuccess = resolve;
-        });
-      }
-      window.deleteEntry = async (id) => {
-        if (confirm('Eintrag löschen?')) {
-          await deleteLogEntry(id);
-          refreshHome();
-        }
-      };
-
+      async function deleteLogEntry(id) { return new Promise(resolve => { const tx = db.transaction('logs','readwrite'); tx.objectStore('logs').delete(id).onsuccess = resolve; }); }
+      window.deleteEntry = async (id) => { if (confirm('Eintrag löschen?')) { await deleteLogEntry(id); refreshHome(); } };
       async function refreshHome() {
         const logs = await getTodayLogs();
         const [goalKcal, goalProtein] = await Promise.all([getSetting('goalKcal',2900), getSetting('goalProtein',175)]);
@@ -481,19 +449,8 @@
           </div>`).join('');
       }
 
-      function getSetting(key, def) {
-        return new Promise(resolve => {
-          const tx = db.transaction('settings','readonly');
-          tx.objectStore('settings').get(key).onsuccess = e => resolve(e.target.result?.value ?? def);
-        });
-      }
-      function setSetting(key, value) {
-        return new Promise(resolve => {
-          const tx = db.transaction('settings','readwrite');
-          tx.objectStore('settings').put({key, value});
-          tx.oncomplete = resolve;
-        });
-      }
+      function getSetting(key, def) { return new Promise(resolve => { const tx = db.transaction('settings','readonly'); tx.objectStore('settings').get(key).onsuccess = e => resolve(e.target.result?.value ?? def); }); }
+      function setSetting(key, value) { return new Promise(resolve => { const tx = db.transaction('settings','readwrite'); tx.objectStore('settings').put({key, value}); tx.oncomplete = resolve; }); }
       document.getElementById('save-settings-btn').onclick = async () => {
         await setSetting('goalKcal', parseInt(document.getElementById('goal-kcal').value)||2900);
         await setSetting('goalProtein', parseInt(document.getElementById('goal-protein').value)||175);
@@ -507,8 +464,6 @@
       async function initApp() {
         await initSettingsForm();
         showView('home');
-        // einmalig Produkte laden
-        refreshSavedProducts();
       }
     })();
   </script>
